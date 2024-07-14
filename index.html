@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استمارة الحجز</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #e0e0e0;
+            border-radius: 20px;
+            box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
+            padding: 30px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input, select, textarea, button {
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 10px;
+            border: none;
+            background: #e0e0e0;
+            box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: inset 3px 3px 6px #bebebe, inset -3px -3px 6px #ffffff;
+        }
+
+        button {
+            border: none;
+            background-color: #333;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 5px 5px 10px #bebebe, -5px -5px 10px #ffffff;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #555;
+            box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
+        }
+
+        .map-container {
+            height: 400px;
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
+            margin-top: 20px;
+        }
+
+        .coordinates {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto 20px;
+            width: 100px;
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://i.imgur.com/aiBqoNs.png" alt="شعار الشركة" class="logo">
+        <h2>استمارة طلب</h2>
+        <h2>املء جميع المعلومات</h2>
+
+        <form id="reservationForm">
+            <label for="customerName">اسم العميل</label>
+            <input type="text" id="customerName" name="customerName" required>
+
+            <label for="address">العنوان</label>
+            <input type="text" id="address" name="address" required>
+
+            <label for="province">المحافظة</label>
+            <select id="province" name="province" required>
+                <option value="">اختر المحافظة</option>
+                <option value="بغداد">بغداد</option>
+                <option value="البصرة">البصرة</option>
+                <option value="النجف">النجف</option>
+                <option value="كربلاء">كربلاء</option>
+                <option value="الأنبار">الأنبار</option>
+                <option value="ميسان">ميسان</option>
+                <option value="ذي قار">ذي قار</option>
+                <option value="ديالى">ديالى</option>
+                <option value="كركوك">كركوك</option>
+                <option value="صلاح الدين">صلاح الدين</option>
+                <option value="واسط">واسط</option>
+                <option value="المثنى">المثنى</option>
+                <option value="بابل">بابل</option>
+                <option value="الديوانية">الديوانية</option>
+                <option value="نينوى">نينوى</option>
+                <option value="دهوك">دهوك</option>
+                <option value="أربيل">أربيل</option>
+                <option value="السليمانية">السليمانية</option>
+            </select>
+
+            <label for="phoneNumber">رقم الهاتف</label>
+            <input type="tel" id="phoneNumber" name="phoneNumber" required>
+
+            <label for="productType">نوع المنتج</label>
+            <input type="text" id="productType" name="productType" required>
+
+            <label for="productSize">حجم المنتج</label>
+            <input type="text" id="productSize" name="productSize" required>
+
+            <label for="quantity">العدد</label>
+            <input type="number" id="quantity" name="quantity" required>
+
+            <label for="note">ملاحظة</label>
+            <textarea id="note" name="note" rows="3"></textarea>
+
+            <label for="map">تحديد الموقع على الخريطة</label>
+            <div id="map" class="map-container"></div>
+            <div class="coordinates" id="coordinates"></div>
+            <button type="submit">إرسال</button>
+        </form>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <!-- إضافة Firebase -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { getDatabase, ref, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+
+        // إعداد Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJdOJaUzJGTdsa67FqHPnALs6QnNlnk2g",
+            authDomain: "talbatsm.firebaseapp.com",
+            databaseURL: "https://talbatsm-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "talbatsm",
+            storageBucket: "talbatsm.appspot.com",
+            messagingSenderId: "300265699609",
+            appId: "1:300265699609:web:b8febb73507c57b356ed88",
+            measurementId: "G-JGPQRRN6FJ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const map = L.map('map').setView([33.3152, 44.3661], 5);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            let marker;
+
+            function onLocationFound(e) {
+                const radius = e.accuracy / 2;
+                if (marker) {
+                    map.removeLayer(marker);
+                }
+                marker = L.marker(e.latlng).addTo(map)
+                    .bindPopup(`أنت هنا تقريبًا (بدقة ${radius} مترًا)`).openPopup();
+                document.getElementById('coordinates').innerText = `إحداثيات: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+                document.getElementById('reservationForm').dataset.lat = e.latlng.lat;
+                document.getElementById('reservationForm').dataset.lng = e.latlng.lng;
+
+                // Use reverse geocoding to get the province
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}&zoom=10&accept-language=ar`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.address.state) {
+                            document.getElementById('province').value = data.address.state;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+
+            function onLocationError(e) {
+                alert(e.message);
+            }
+
+            map.on('locationfound', onLocationFound);
+            map.on('locationerror', onLocationError);
+
+                               map.locate({ setView: true, maxZoom: 16 });
+
+                               map.on('click', function(e) {
+                                   if (marker) {
+                                       map.removeLayer(marker);
+                                   }
+                                   marker = L.marker(e.latlng).addTo(map)
+                                       .bindPopup(`الموقع الذي اخترته`).openPopup();
+                                   document.getElementById('coordinates').innerText = `إحداثيات: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+                                   document.getElementById('reservationForm').dataset.lat = e.latlng.lat;
+                                   document.getElementById('reservationForm').dataset.lng = e.latlng.lng;
+                               });
+
+                               const reservationForm = document.getElementById('reservationForm');
+                               reservationForm.addEventListener('submit', (event) => {
+                                   event.preventDefault();
+
+                                   const reservationData = {
+                                       customerName: reservationForm.customerName.value,
+                                       address: reservationForm.address.value,
+                                       province: reservationForm.province.value,
+                                       phoneNumber: reservationForm.phoneNumber.value,
+                                       productType: reservationForm.productType.value,
+                                       productSize: reservationForm.productSize.value,
+                                       quantity: reservationForm.quantity.value,
+                                       note: reservationForm.note.value,
+                                       lat: reservationForm.dataset.lat,
+                                       lng: reservationForm.dataset.lng,
+                                       timestamp: serverTimestamp()
+                                   };
+
+                                   const newReservationRef = ref(db, 'reservations/' + reservationData.phoneNumber + '_' + Date.now());
+                                   set(newReservationRef, reservationData)
+                                       .then(() => {
+                                           alert('تم إرسال الطلب بنجاح');
+                                           reservationForm.reset();
+                                           document.getElementById('coordinates').innerText = '';
+                                           if (marker) {
+                                               map.removeLayer(marker);
+                                           }
+                                       })
+                                       .catch((error) => {
+                                           console.error('Error writing to Firebase Database', error);
+                                       });
+                               });
+                           });
+                       </script>
+                   </body>
+                   </html>

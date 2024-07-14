@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الطلبات</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 20px;
+            margin: 0;
+            direction: rtl;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: #e0e0e0;
+            border-radius: 20px;
+            box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
+            padding: 30px;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .action-btns {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .action-btns button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .view-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .share-btn {
+            background-color: #008CBA;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 10px;
+            text-align: right;
+        }
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn {
+            display: block;
+            margin-top: 20px;
+            padding: 10px;
+            text-align: center;
+            background-color: #4CAF50;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>إدارة الطلبات</h2>
+        <table id="ordersTable" class="display">
+            <thead>
+                <tr>
+                    <th>اسم العميل</th>
+                    <th>رقم الهاتف</th>
+                    <th>العنوان</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="orderDetails"></div>
+            <input type="text" id="newPrice" placeholder="أدخل السعر الجديد" />
+            <button id="updatePriceBtn" class="btn">تحديث السعر</button>
+            <a id="googleMapsLink" class="btn" href="#" target="_blank">عرض على خرائط جوجل</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { getDatabase, ref, get, push, remove, set, update } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJdOJaUzJGTdsa67FqHPnALs6QnNlnk2g",
+            authDomain: "talbatsm.firebaseapp.com",
+            databaseURL: "https://talbatsm-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "talbatsm",
+            storageBucket: "talbatsm.appspot.com",
+            messagingSenderId: "300265699609",
+            appId: "1:300265699609:web:b8febb73507c57b356ed88",
+            measurementId: "G-JGPQRRN6FJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        function createOrder(customerName, phoneNumber, address, province, productType, productSize, quantity, note, price) {
+            const ordersRef = ref(db, 'reservations');
+            const newOrderRef = push(ordersRef);
+            const orderDate = new Date().toISOString(); // الحصول على التاريخ الحالي بتنسيق ISO
+
+            set(newOrderRef, {
+                customerName: customerName,
+                phoneNumber: phoneNumber,
+                address: address,
+                province: province,
+                productType: productType,
+                productSize: productSize,
+                quantity: quantity,
+                note: note,
+                price: price,
+                orderDate: orderDate // إضافة حقل التاريخ
+            }).then(() => {
+                alert('تم إنشاء الطلب بنجاح');
+            }).catch((error) => {
+                console.error('حدث خطأ أثناء إنشاء الطلب:', error);
+                alert('حدث خطأ أثناء إنشاء الطلب: ' + error);
+            });
+        }
+
+        function loadOrders() {
+            const ordersRef = ref(db, 'reservations');
+            get(ordersRef).then((snapshot) => {
+                const orders = snapshot.val();
+                const ordersArray = Object.keys(orders).map(key => ({
+                    id: key.padStart(5, '0'), // رقم الطلب من 5 أرقام
+                    ...orders[key]
+                }));
+                const ordersTable = $('#ordersTable').DataTable();
+                ordersTable.clear();
+                ordersArray.forEach(order => {
+                    ordersTable.row.add([
+                        order.customerName,
+                        order.phoneNumber,
+                        order.address,
+                        `
+                        <div class="action-btns">
+                            <button class="view-btn" data-id="${order.id}">عرض</button>
+                            <button class="delete-btn" data-id="${order.id}">حذف</button>
+                            <button class="share-btn" data-id="${order.id}">مشاركة</button>
+                        </div>
+                        `
+                    ]).draw();
+                });
+
+                $('.view-btn').on('click', function() {
+                    const orderId = $(this).data('id');
+                    const order = orders[orderId];
+                    const modal = document.getElementById("orderModal");
+                    const span = document.getElementsByClassName("close")[0];
+                    const orderDetailsDiv = document.getElementById("orderDetails");
+                    const googleMapsLink = document.getElementById("googleMapsLink");
+
+                    orderDetailsDiv.innerHTML = `
+                        <p><span class="highlight">اسم العميل:</span> ${order.customerName}</p>
+                        <p><span class="highlight">العنوان:</span> ${order.address}</p>
+                        <p><span class="highlight">المحافظة:</span> ${order.province}</p>
+                        <p><span class="highlight">رقم الهاتف:</span> ${order.phoneNumber}</p>
+                        <p><span class="highlight">نوع المنتج:</span> ${order.productType}</p>
+                        <p><span class="highlight">حجم المنتج:</span> ${order.productSize}</p>
+                        <p><span class="highlight">العدد:</span> ${order.quantity}</p>
+                        <p><span class="highlight">ملاحظة:</span> ${order.note}</p>
+                        <p><span class="highlight">السعر:</span> <span id="orderPrice">${order.price}</span></p>
+                                                <p><span class="highlight">تاريخ الطلب:</span> ${order.orderDate}</p>
+                    `;
+
+                    googleMapsLink.href = `https://www.google.com/maps/search/?api=1&query=${order.lat},${order.lng}`;
+
+                    modal.style.display = "block";
+
+                    span.onclick = function() {
+                        modal.style.display = "none";
+                    }
+
+                    window.onclick = function(event) {
+                        if (event.target == modal) {
+                            modal.style.display = "none";
+                        }
+                    }
+
+                    document.getElementById("updatePriceBtn").onclick = function() {
+                        const newPrice = document.getElementById("newPrice").value;
+                        if (newPrice) {
+                            const orderRef = ref(db, 'reservations/' + orderId);
+                            update(orderRef, { price: newPrice }).then(() => {
+                                document.getElementById("orderPrice").textContent = newPrice;
+                                alert('تم تحديث السعر بنجاح');
+                            }).catch((error) => {
+                                console.error('حدث خطأ أثناء تحديث السعر:', error);
+                                alert('حدث خطأ أثناء تحديث السعر: ' + error);
+                            });
+                        } else {
+                            alert('يرجى إدخال سعر جديد');
+                        }
+                    }
+                });
+
+                $('.delete-btn').on('click', function() {
+                    const orderId = $(this).data('id');
+                    if (confirm('هل أنت متأكد أنك تريد حذف هذا الطلب؟')) {
+                        const orderRef = ref(db, 'reservations/' + orderId);
+                        remove(orderRef).then(() => {
+                            alert('تم حذف الطلب بنجاح');
+                            loadOrders();
+                        }).catch((error) => {
+                            console.error('Error deleting order', error);
+                            alert('حدث خطأ أثناء حذف الطلب: ' + error);
+                        });
+                    }
+                });
+
+                $('.share-btn').on('click', function() {
+                    const orderId = $(this).data('id');
+                    const shareUrl = window.location.origin + '/order-details.html?id=' + orderId;
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'تفاصيل الطلب',
+                            url: shareUrl
+                        }).then(() => {
+                            console.log('Thanks for sharing!');
+                        }).catch(console.error);
+                    } else {
+                        prompt('انسخ الرابط التالي لمشاركته:', shareUrl);
+                    }
+                });
+            }).catch((error) => {
+                console.error('Error loading orders', error);
+                alert('حدث خطأ أثناء تحميل الطلبات: ' + error);
+            });
+        }
+
+        $(document).ready(function() {
+            const ordersTable = $('#ordersTable').DataTable();
+
+            // Check for authenticated user
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // User is signed in
+                    loadOrders();
+                } else {
+                    // User is signed out, redirect to login page
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+                   

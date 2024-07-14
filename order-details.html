@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل الطلب</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 20px;
+            margin: 0;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #e0e0e0;
+            border-radius: 20px;
+            box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
+            padding: 30px;
+        }
+        .details {
+            margin-bottom: 20px;
+            flex: 1;
+        }
+        .map-container {
+            height: 400px;
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
+            margin-top: 20px;
+        }
+        .btn {
+            display: block;
+            margin-top: 20px;
+            padding: 10px;
+            text-align: center;
+            background-color: #4CAF50;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="details" id="orderDetails"></div>
+        <div id="map" class="map-container"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJdOJaUzJGTdsa67FqHPnALs6QnNlnk2g",
+            authDomain: "talbatsm.firebaseapp.com",
+            databaseURL: "https://talbatsm-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "talbatsm",
+            storageBucket: "talbatsm.appspot.com",
+            messagingSenderId: "300265699609",
+            appId: "1:300265699609:web:b8febb73507c57b356ed88",
+            measurementId: "G-JGPQRRN6FJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('id');
+
+            if (orderId) {
+                const orderRef = ref(db, 'reservations/' + orderId);
+                get(orderRef).then((snapshot) => {
+                    const orderData = snapshot.val();
+                    const orderDate = new Date(orderData.date).toLocaleDateString('ar-EG');
+                    document.getElementById('orderDetails').innerHTML = `
+                        <p><span class="highlight">اسم العميل:</span> ${orderData.customerName}</p>
+                        <p><span class="highlight">العنوان:</span> ${orderData.address}</p>
+                        <p><span class="highlight">المحافظة:</span> ${orderData.province}</p>
+                        <p><span class="highlight">رقم الهاتف:</span> ${orderData.phoneNumber}</p>
+                        <p><span class="highlight">نوع المنتج:</span> ${orderData.productType}</p>
+                        <p><span class="highlight">حجم المنتج:</span> ${orderData.productSize}</p>
+                        <p><span class="highlight">العدد:</span> ${orderData.quantity}</p>
+                        <p><span class="highlight">ملاحظة:</span> ${orderData.note}</p>
+                        <p><span class="highlight">السعر:</span> ${orderData.price}</p>
+                        <p><span class="highlight">تاريخ الطلب:</span> ${orderDate}</p>
+                        <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${orderData.lat},${orderData.lng}" target="_blank">عرض على خرائط جوجل</a>
+                    `;
+
+                    const map = L.map('map').setView([orderData.lat, orderData.lng], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                        maxZoom: 19
+                    }).addTo(map);
+
+                    L.marker([orderData.lat, orderData.lng]).addTo(map)
+                        .bindPopup(`موقع الطلب`).openPopup();
+                }).catch((error) => {
+                    console.error('Error fetching order details', error);
+                });
+            } else {
+                document.getElementById('orderDetails').innerText = 'لم يتم العثور على تفاصيل الطلب.';
+            }
+        });
+    </script>
+</body>
+</html>
