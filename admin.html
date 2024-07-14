@@ -276,7 +276,7 @@
 
                 $('.share-btn').on('click', function() {
                     const orderId = $(this).data('id');
-                    const shareUrl = window.location.origin + 'SUPERMA/order-details.html?id=' + orderId;
+                    const shareUrl = window.location.origin + '/SUPERMA/order-details.html?id=' + orderId;
                     if (navigator.share) {
                         navigator.share({
                             title: 'تفاصيل الطلب',
