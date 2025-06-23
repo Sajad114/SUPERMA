@@ -1,314 +1,316 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة الطلبات</title>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e0e0e0;
-            color: #333;
-            padding: 20px;
-            margin: 0;
-            direction: rtl;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            background: #e0e0e0;
-            border-radius: 20px;
-            box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #ffffff;
-            padding: 30px;
-        }
-        table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .action-btns {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        .action-btns button {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .view-btn {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .delete-btn {
-            background-color: #f44336;
-            color: white;
-        }
-        .share-btn {
-            background-color: #008CBA;
-            color: white;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgb(0,0,0);
-            background-color: rgba(0,0,0,0.4);
-            padding-top: 60px;
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            border-radius: 10px;
-            text-align: right;
-        }
-        .close {
-            color: #aaa;
-            float: left;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .btn {
-            display: block;
-            margin-top: 20px;
-            padding: 10px;
-            text-align: center;
-            background-color: #4CAF50;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        .highlight {
-            font-weight: bold;
-            color: #000;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>إدارة الطلبات</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- روابط المكتبات -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      direction: rtl;
+      background: #f3f3f3;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      background: #ffffffcc;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #filters {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #filters select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .action-btns {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .action-btns button {
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .view-btn { background: #28a745; }
+    .delete-btn { background: #dc3545; }
+    .share-btn { background: #007bff; }
+
+    #loading {
+      text-align: center;
+      padding: 10px;
+    }
+
+    /* المودال */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 99;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+      padding-top: 60px;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 12px;
+      width: 80%;
+      position: relative;
+      box-shadow: 0 0 10px rgba(0,0,0,0.25);
+    }
+
+    .close {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    #orderDetails p {
+      margin: 8px 0;
+      font-size: 15px;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      background: #17a2b8;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    #newPrice {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>إدارة الطلبات</h2>
-        <table id="ordersTable" class="display">
-            <thead>
-                <tr>
-                    <th>اسم العميل</th>
-                    <th>رقم الهاتف</th>
-                    <th>العنوان</th>
-                    <th>الإجراءات</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
 
-    <div id="orderModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div id="orderDetails"></div>
-            <input type="text" id="newPrice" placeholder="أدخل السعر الجديد" />
-            <button id="updatePriceBtn" class="btn">تحديث السعر</button>
-            <a id="googleMapsLink" class="btn" href="#" target="_blank">عرض على خرائط جوجل</a>
-        </div>
-    </div>
+<div class="container">
+  <h2>إدارة الطلبات</h2>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-        import { getDatabase, ref, get, push, remove, set, update } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+  <div id="filters">
+    <label>تصفية حسب المحافظة:
+      <select id="provinceFilter">
+        <option value="">الكل</option>
+        <option value="بغداد">بغداد</option>
+        <option value="البصرة">البصرة</option>
+        <option value="نينوى">نينوى</option>
+        <option value="كربلاء">كربلاء</option>
+        <!-- أضف المزيد حسب الحاجة -->
+      </select>
+    </label>
+  </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCJdOJaUzJGTdsa67FqHPnALs6QnNlnk2g",
-            authDomain: "talbatsm.firebaseapp.com",
-            databaseURL: "https://talbatsm-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "talbatsm",
-            storageBucket: "talbatsm.appspot.com",
-            messagingSenderId: "300265699609",
-            appId: "1:300265699609:web:b8febb73507c57b356ed88",
-            measurementId: "G-JGPQRRN6FJ"
-        };
+  <div id="loading">جاري تحميل الطلبات...</div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
+  <table id="ordersTable" class="display">
+    <thead>
+      <tr>
+        <th>اسم العميل</th>
+        <th>الهاتف</th>
+        <th>العنوان</th>
+        <th>المحافظة</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-        function createOrder(customerName, phoneNumber, address, province, productType, productSize, quantity, note, price) {
-            const ordersRef = ref(db, 'reservations');
-            const newOrderRef = push(ordersRef);
-            const orderDate = new Date().toISOString(); // الحصول على التاريخ الحالي بتنسيق ISO
+<!-- المودال -->
+<div id="orderModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div id="orderDetails"></div>
+    <input type="text" id="newPrice" placeholder="أدخل السعر الجديد" />
+    <button id="updatePriceBtn" class="btn">تحديث السعر</button>
+    <a id="googleMapsLink" class="btn" href="#" target="_blank" style="display:none;">عرض على خرائط Google</a>
+  </div>
+</div>
 
-            set(newOrderRef, {
-                customerName: customerName,
-                phoneNumber: phoneNumber,
-                address: address,
-                province: province,
-                productType: productType,
-                productSize: productSize,
-                quantity: quantity,
-                note: note,
-                price: price,
-                orderDate: orderDate // إضافة حقل التاريخ
-            }).then(() => {
-                alert('تم إنشاء الطلب بنجاح');
-            }).catch((error) => {
-                console.error('حدث خطأ أثناء إنشاء الطلب:', error);
-                alert('حدث خطأ أثناء إنشاء الطلب: ' + error);
-            });
-        }
+<!-- مكتبات JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
 
-        function loadOrders() {
-            const ordersRef = ref(db, 'reservations');
-            get(ordersRef).then((snapshot) => {
-                const orders = snapshot.val();
-                const ordersArray = Object.keys(orders).map(key => ({
-                    id: key.padStart(5, '0'), // رقم الطلب من 5 أرقام
-                    ...orders[key]
-                }));
-                const ordersTable = $('#ordersTable').DataTable();
-                ordersTable.clear();
-                ordersArray.forEach(order => {
-                    ordersTable.row.add([
-                        order.customerName,
-                        order.phoneNumber,
-                        order.address,
-                        `
-                        <div class="action-btns">
-                            <button class="view-btn" data-id="${order.id}">عرض</button>
-                            <button class="delete-btn" data-id="${order.id}">حذف</button>
-                            <button class="share-btn" data-id="${order.id}">مشاركة</button>
-                        </div>
-                        `
-                    ]).draw();
-                });
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+  import { getDatabase, ref, get, remove, update } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 
-                $('.view-btn').on('click', function() {
-                    const orderId = $(this).data('id');
-                    const order = orders[orderId];
-                    const modal = document.getElementById("orderModal");
-                    const span = document.getElementsByClassName("close")[0];
-                    const orderDetailsDiv = document.getElementById("orderDetails");
-                    const googleMapsLink = document.getElementById("googleMapsLink");
+  const firebaseConfig = {
+    apiKey: "AIzaSyCJdOJaUzJGTdsa67FqHPnALs6QnNlnk2g",
+    authDomain: "talbatsm.firebaseapp.com",
+    databaseURL: "https://talbatsm-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "talbatsm",
+    storageBucket: "talbatsm.appspot.com",
+    messagingSenderId: "300265699609",
+    appId: "1:300265699609:web:b8febb73507c57b356ed88"
+  };
 
-                    orderDetailsDiv.innerHTML = `
-                        <p><span class="highlight">اسم العميل:</span> ${order.customerName}</p>
-                        <p><span class="highlight">العنوان:</span> ${order.address}</p>
-                        <p><span class="highlight">المحافظة:</span> ${order.province}</p>
-                        <p><span class="highlight">رقم الهاتف:</span> ${order.phoneNumber}</p>
-                        <p><span class="highlight">نوع المنتج:</span> ${order.productType}</p>
-                        <p><span class="highlight">حجم المنتج:</span> ${order.productSize}</p>
-                        <p><span class="highlight">العدد:</span> ${order.quantity}</p>
-                        <p><span class="highlight">ملاحظة:</span> ${order.note}</p>
-                        <p><span class="highlight">السعر:</span> <span id="orderPrice">${order.price}</span></p>
-                                                <p><span class="highlight">تاريخ الطلب:</span> ${order.orderDate}</p>
-                    `;
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
 
-                    googleMapsLink.href = `https://www.google.com/maps/search/?api=1&query=${order.lat},${order.lng}`;
+  const table = $('#ordersTable').DataTable();
 
-                    modal.style.display = "block";
+  function loadOrders() {
+    $('#loading').show();
 
-                    span.onclick = function() {
-                        modal.style.display = "none";
-                    }
+    get(ref(db, 'reservations')).then(snapshot => {
+      const data = snapshot.val();
+      if (!data) return $('#loading').text("لا توجد طلبات حالياً");
 
-                    window.onclick = function(event) {
-                        if (event.target == modal) {
-                            modal.style.display = "none";
-                        }
-                    }
+      table.clear();
+      for (const id in data) {
+        const o = data[id];
+        table.row.add([
+          o.customerName,
+          o.phoneNumber,
+          o.address,
+          o.province,
+          `
+          <div class="action-btns">
+            <button class="view-btn" data-id="${id}"><i class="fas fa-eye"></i></button>
+            <button class="delete-btn" data-id="${id}"><i class="fas fa-trash-alt"></i></button>
+            <button class="share-btn" data-id="${id}"><i class="fas fa-share-alt"></i></button>
+          </div>
+          `
+        ]);
+      }
 
-                    document.getElementById("updatePriceBtn").onclick = function() {
-                        const newPrice = document.getElementById("newPrice").value;
-                        if (newPrice) {
-                            const orderRef = ref(db, 'reservations/' + orderId);
-                            update(orderRef, { price: newPrice }).then(() => {
-                                document.getElementById("orderPrice").textContent = newPrice;
-                                alert('تم تحديث السعر بنجاح');
-                            }).catch((error) => {
-                                console.error('حدث خطأ أثناء تحديث السعر:', error);
-                                alert('حدث خطأ أثناء تحديث السعر: ' + error);
-                            });
-                        } else {
-                            alert('يرجى إدخال سعر جديد');
-                        }
-                    }
-                });
+      table.draw();
+      $('#loading').hide();
+      setActions(data);
+    });
+  }
 
-                $('.delete-btn').on('click', function() {
-                    const orderId = $(this).data('id');
-                    if (confirm('هل أنت متأكد أنك تريد حذف هذا الطلب؟')) {
-                        const orderRef = ref(db, 'reservations/' + orderId);
-                        remove(orderRef).then(() => {
-                            alert('تم حذف الطلب بنجاح');
-                            loadOrders();
-                        }).catch((error) => {
-                            console.error('Error deleting order', error);
-                            alert('حدث خطأ أثناء حذف الطلب: ' + error);
-                        });
-                    }
-                });
+  function setActions(data) {
+    $('.view-btn').on('click', function () {
+      const id = $(this).data('id');
+      const o = data[id];
 
-                $('.share-btn').on('click', function() {
-                    const orderId = $(this).data('id');
-                    const shareUrl = window.location.origin + '/SUPERMA/order-details.html?id=' + orderId;
-                    if (navigator.share) {
-                        navigator.share({
-                            title: 'تفاصيل الطلب',
-                            url: shareUrl
-                        }).then(() => {
-                            console.log('Thanks for sharing!');
-                        }).catch(console.error);
-                    } else {
-                        prompt('انسخ الرابط التالي لمشاركته:', shareUrl);
-                    }
-                });
-            }).catch((error) => {
-                console.error('Error loading orders', error);
-                alert('حدث خطأ أثناء تحميل الطلبات: ' + error);
-            });
-        }
+      $('#orderDetails').html(`
+        <p><strong>اسم العميل:</strong> ${o.customerName}</p>
+        <p><strong>الهاتف:</strong> ${o.phoneNumber}</p>
+        <p><strong>العنوان:</strong> ${o.address}</p>
+        <p><strong>المحافظة:</strong> ${o.province}</p>
+        <p><strong>النوع:</strong> ${o.productType}</p>
+        <p><strong>الحجم:</strong> ${o.productSize}</p>
+        <p><strong>العدد:</strong> ${o.quantity}</p>
+        <p><strong>ملاحظات:</strong> ${o.note || '-'}</p>
+        <p><strong>السعر:</strong> <span id="orderPrice">${o.price || 'غير محدد'}</span> دينار</p>
+        <p><strong>التاريخ:</strong> ${o.orderDate || 'غير متوفر'}</p>
+      `);
 
-        $(document).ready(function() {
-            const ordersTable = $('#ordersTable').DataTable();
+      if (o.lat && o.lng) {
+        $('#googleMapsLink').attr('href', `https://www.google.com/maps/search/?api=1&query=${o.lat},${o.lng}`).show();
+      } else {
+        $('#googleMapsLink').hide();
+      }
 
-            // Check for authenticated user
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    // User is signed in
-                    loadOrders();
-                } else {
-                    // User is signed out, redirect to login page
-                    window.location.href = 'login.html';
-                }
-            });
+      $('#orderModal').show();
+
+      $('#updatePriceBtn').off().on('click', () => {
+        const newPrice = $('#newPrice').val().trim();
+        if (!newPrice) return Swal.fire('تنبيه', 'يرجى إدخال السعر الجديد', 'warning');
+
+        update(ref(db, 'reservations/' + id), { price: newPrice }).then(() => {
+          $('#orderPrice').text(newPrice);
+          Swal.fire('تم التحديث', 'تم تحديث السعر بنجاح', 'success');
         });
-    </script>
+      });
+
+      $('.close').on('click', () => $('#orderModal').hide());
+      window.onclick = e => { if (e.target == document.getElementById("orderModal")) $('#orderModal').hide(); };
+    });
+
+    $('.delete-btn').on('click', function () {
+      const id = $(this).data('id');
+      Swal.fire({
+        title: 'هل أنت متأكد؟',
+        text: "سيتم حذف الطلب نهائياً!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'نعم',
+        cancelButtonText: 'إلغاء'
+      }).then(result => {
+        if (result.isConfirmed) {
+          remove(ref(db, 'reservations/' + id)).then(() => {
+            Swal.fire('تم الحذف', '', 'success');
+            loadOrders();
+          });
+        }
+      });
+    });
+
+    $('.share-btn').on('click', function () {
+      const id = $(this).data('id');
+      const link = `${window.location.origin}/SUPERMA/order-details.html?id=${id}`;
+      if (navigator.share) {
+        navigator.share({ title: "تفاصيل الطلب", url: link });
+      } else {
+        Swal.fire("رابط المشاركة", `<input value="${link}" readonly style="width:100%;padding:10px;">`, "info");
+      }
+    });
+  }
+
+  $(document).ready(() => {
+    onAuthStateChanged(auth, user => {
+      if (user) loadOrders();
+      else window.location.href = "login.html";
+    });
+
+    $('#provinceFilter').on('change', function () {
+      table.column(3).search(this.value).draw();
+    });
+  });
+</script>
 </body>
 </html>
                    
